@@ -2,8 +2,11 @@ import requests
 import constants
 import twitter
 import os
+import datetime
+import schedule
+import time
+import logging
 from dotenv import load_dotenv
-load_dotenv()
 
 def process_latest(json_data):
     last_day = json_data[len(json_data) - 1]
@@ -63,10 +66,54 @@ def tweet_updates(processed_data):
 
     api.PostUpdate(formatted_tweet)
 
-req = requests.get(constants.NATIONAL_DATA_JSON_URL)
+def parse_date(str):
+    return datetime.datetime.strptime(str, constants.DATE_FORMAT)
 
-if req.status_code == 200:
-    json_data = req.json()
-    processed_data = process_latest(json_data)
-    tweet_updates(processed_data)
+def read_last_date_updated(fpath):
+    try:
+        with open(fpath, "r") as file:
+            return parse_date(file.readline())
+    except IOError:
+        return None
     
+def write_last_date_updated(fpath, date):
+    try:
+        with open(fpath, "w+") as file:
+            date_str = date.strftime(constants.DATE_FORMAT)
+            file.writelines(date_str)
+    except IOError as e:
+        logging.error(e.msg())
+
+def check_for_new_data():
+    logging.info("Checking for new data...")
+    req = requests.get(constants.NATIONAL_DATA_JSON_URL)
+
+    if req.status_code == 200:
+        json_data = req.json()
+        last_data_date = parse_date(json_data[len(json_data) - 1]["data"])
+        last_exec_date = read_last_date_updated(constants.LATEST_EXECUTION_DATE_FILE_PATH)
+
+        if last_data_date > last_exec_date:
+            logging.info("New data found, processing and tweeting...")
+            processed_data = process_latest(json_data)
+            tweet_updates(processed_data)
+            write_last_date_updated(constants.LATEST_EXECUTION_DATE_FILE_PATH, last_data_date)
+            logging.info("New data tweeted successfully.")
+        else: 
+            logging.info("No updates found.")
+    else:
+        logging.warn("Got " + req.status_code + " status code")
+
+def main():
+    load_dotenv()
+    logging.basicConfig(format="%(asctime)s - %(levelname)s - %(module)s - %(message)s", level=logging.DEBUG)
+
+    job = schedule.every(constants.UPDATE_CHECK_INTERVAL_MINUTES).minutes.do(check_for_new_data)
+    job.run()
+
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
+
+if __name__ == "__main__":
+    main()

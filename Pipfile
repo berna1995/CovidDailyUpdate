@@ -10,6 +10,7 @@ pylint = "*"
 requests = "*"
 python-twitter = "*"
 python-dotenv = "*"
+schedule = "*"
 
 [requires]
 python_version = "3.8"
