@@ -28,11 +28,11 @@ def process_latest(json_data):
 
 def get_trend_icon(value):
     if value > 0:
-        return "⬆"
+        return "📈"
     elif value == 0:
-        return "↔"
+        return "0️⃣"
     else:
-        return "⬇"
+        return "📉"
 
 def tweet_updates(processed_data):
     api = twitter.Api(consumer_key=os.getenv("TWITTER_CONSUMER_API_KEY"),
@@ -82,7 +82,7 @@ def write_last_date_updated(fpath, date):
             date_str = date.strftime(constants.DATE_FORMAT)
             file.writelines(date_str)
     except IOError as e:
-        logging.error(e.msg())
+        logging.error(e)
 
 def check_for_new_data():
     logging.info("Checking for new data...")
