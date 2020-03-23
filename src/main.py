@@ -40,7 +40,7 @@ def tweet_updates(processed_data):
                   access_token_key=os.getenv("TWITTER_ACCESS_TOKEN_KEY"),
                   access_token_secret=os.getenv("TWITTER_ACCESS_TOKEN_SECRET_KEY"))
 
-    tweet = "🦠 Aggiornamento Giornaliero Covid-19\n\n" \
+    tweet = "🦠🇮🇹 Aggiornamento Giornaliero Covid-19\n\n" \
             "{0} Totale casi attivi: {1} ({2:+d}) ({3:+.2f}%)\n" \
             "{4} Totale ospedalizzati: {5} ({6:+d}) ({7:+.2f}%)\n" \
             "{8} Totali terapia intensiva: {9} ({10:+d}) ({11:+.2f}%)\n" \
