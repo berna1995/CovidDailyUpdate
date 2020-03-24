@@ -6,7 +6,7 @@
 ## The Project
 
 Just a simple bot written in Python posting on Twitter daily updates of the situation concerning Covid-19 in Italy.  
-The bot is currently under development and soon will run on a server, checking periodically for updates.
+The bot is currently under development and soon will run on a server, checking periodically for updates.  
 The Twitter account currently used is [@covid_daily](https://twitter.com/covid_daily).  
 
 ## Data
