@@ -111,12 +111,12 @@ def generate_graphs(json_data):
     for i in range(len(tests) - 1, 0, -1):
         tests[i] = tests[i] - tests[i-1]
 
-    Path(constants.TEMP_FILES_PATH).mkdir(parents=True, exist_ok=True)
+    constants.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
 
     charts_paths = [
-        constants.TEMP_FILES_PATH + "/chart_001.png",
-        constants.TEMP_FILES_PATH + "/chart_002.png",
-        constants.TEMP_FILES_PATH + "/chart_003.png"
+        str(constants.TEMP_FILES_PATH / "chart_001.png"),
+        str(constants.TEMP_FILES_PATH / "chart_002.png"),
+        str(constants.TEMP_FILES_PATH / "chart_003.png")
     ]
 
     plotly.io.orca.config.default_scale = 2.0
