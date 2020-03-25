@@ -6,7 +6,20 @@ import datetime
 import schedule
 import time
 import logging
+import tempfile
+import plotly.graph_objects as go
+from pathlib import Path
 from dotenv import load_dotenv
+
+# Logger setup
+
+log = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(module)s - %(message)s"))
+log.setLevel(logging.DEBUG)
+log.addHandler(handler)
+
+# Functions
 
 def process_latest(json_data):
     last_day = json_data[len(json_data) - 1]
@@ -34,7 +47,7 @@ def get_trend_icon(value):
     else:
         return "📉"
 
-def tweet_updates(processed_data):
+def tweet_updates(processed_data, charts_updates):
     api = twitter.Api(consumer_key=os.getenv("TWITTER_CONSUMER_API_KEY"),
                   consumer_secret=os.getenv("TWITTER_CONSUMER_SECRET_KEY"),
                   access_token_key=os.getenv("TWITTER_ACCESS_TOKEN_KEY"),
@@ -64,7 +77,7 @@ def tweet_updates(processed_data):
                                    processed_data["deaths_delta"],
                                    processed_data["deaths_delta_percentage"])
 
-    api.PostUpdate(formatted_tweet)
+    api.PostUpdate(formatted_tweet, media=charts_updates)
 
 def parse_date(str):
     return datetime.datetime.strptime(str, constants.DATE_FORMAT)
@@ -82,10 +95,84 @@ def write_last_date_updated(fpath, date):
             date_str = date.strftime(constants.DATE_FORMAT)
             file.writelines(date_str)
     except IOError as e:
-        logging.error(e)
+        log.error(e)
+
+def generate_graphs(json_data):
+    dates = list(map(lambda x: parse_date(x["data"]).date(), json_data))
+    positives = list(map(lambda x: x["totale_attualmente_positivi"], json_data))
+    deaths = list(map(lambda x: x["deceduti"], json_data))
+    healed = list(map(lambda x: x["dimessi_guariti"], json_data))
+    icu = list(map(lambda x: x["terapia_intensiva"], json_data))
+    non_icu = list(map(lambda x: x["totale_ospedalizzati"] - x["terapia_intensiva"], json_data))
+    home_isolated = list(map(lambda x: x["isolamento_domiciliare"], json_data))
+    new_positives = list(map(lambda x: x["nuovi_attualmente_positivi"], json_data))
+    tests = list(map(lambda x: x["tamponi"], json_data))
+    for i in range(len(tests) - 1, 0, -1):
+        tests[i] = tests[i] - tests[i-1]
+
+    Path(constants.TEMP_FILES_PATH).mkdir(parents=True, exist_ok=True)
+
+    charts_paths = [
+        constants.TEMP_FILES_PATH + "/chart_001.png",
+        constants.TEMP_FILES_PATH + "/chart_002.png",
+        constants.TEMP_FILES_PATH + "/chart_003.png"
+    ]
+
+    # Chart 1
+    graph = go.Figure()
+    graph.add_trace(go.Scatter(x=dates, y=positives, mode="lines+markers", name="Contagiati Attivi", line=dict(color=constants.CHART_BLUE)))
+    graph.add_trace(go.Scatter(x=dates, y=deaths, mode="lines+markers", name="Deceduti", line=dict(color=constants.CHART_RED)))
+    graph.add_trace(go.Scatter(x=dates, y=healed, mode="lines+markers", name="Guariti", line=dict(color=constants.CHART_GREEN)))
+    graph.update_layout(
+        title="Covid19 Italia - contagiati attivi, deceduti e guariti",
+        title_x=0.5,
+        showlegend=True,
+        autosize=True, 
+        legend=dict(orientation="h", xanchor="center", yanchor="top", x=0.5, y=-0.25),
+        margin=dict(l=30, r=30, t=50, b=50)
+        )
+    graph.update_yaxes(rangemode="normal", automargin=True, ticks="outside")
+    graph.update_xaxes(tickangle=90, type="date", tickformat='%d-%m-%y', ticks="outside", tick0=dates[0], tickmode="linear", automargin=True)
+    graph.write_image(charts_paths[0])
+
+    # Chart 2
+    graph = go.Figure()
+    graph.add_trace(go.Scatter(x=dates, y=icu, mode="lines", name="Ospedalizzati TI", stackgroup="one", line=dict(color=constants.CHART_RED)))
+    graph.add_trace(go.Scatter(x=dates, y=non_icu, mode="lines", name="Ospedalizzati Non TI", stackgroup="one", line=dict(color=constants.CHART_BLUE)))
+    graph.add_trace(go.Scatter(x=dates, y=home_isolated, mode="lines", name="Isolamento Domiciliare", stackgroup="one", line=dict(color=constants.CHART_GREEN)))
+    graph.update_layout(
+        title="Covid19 Italia - ospedalizzati e isolamento domiciliare dei positivi",
+        title_x=0.5,
+        showlegend=True,
+        autosize=True, 
+        legend=dict(orientation="h", xanchor="center", yanchor="top", x=0.5, y=-0.25),
+        margin=dict(l=30, r=30, t=50, b=50)
+        )
+    graph.update_yaxes(rangemode="normal", automargin=True, ticks="outside")
+    graph.update_xaxes(tickangle=90, type="date", tickformat='%d-%m-%y', ticks="outside", rangemode="normal", tick0=dates[0], tickmode="linear", automargin=True)
+    graph.write_image(charts_paths[1])
+
+    # Chart 3
+    graph = go.Figure()
+    graph.add_trace(go.Bar(x=dates, y=tests, name="Tamponi Effettuati", marker=dict(color=constants.CHART_BLUE)))
+    graph.add_trace(go.Bar(x=dates, y=new_positives, name="Nuovi Positivi", marker=dict(color=constants.CHART_RED)))
+    graph.update_layout(
+        title="Covid19 Italia - nuovi positivi giornalieri e tamponi effettuati",
+        title_x=0.5,
+        showlegend=True,
+        autosize=True, 
+        legend=dict(orientation="h", xanchor="center", yanchor="top", x=0.5, y=-0.25),
+        margin=dict(l=30, r=30, t=50, b=50),
+        barmode="group",
+        bargap=0
+        )
+    graph.update_yaxes(rangemode="normal", automargin=True, ticks="outside")
+    graph.update_xaxes(tickangle=90, type="date", tickformat='%d-%m-%y', ticks="outside", rangemode="normal", tick0=dates[0], tickmode="linear", automargin=True)
+    graph.write_image(charts_paths[2])
+    return charts_paths
 
 def check_for_new_data():
-    logging.info("Checking for new data...")
+    log.info("Checking for new data...")
     req = requests.get(constants.NATIONAL_DATA_JSON_URL)
 
     if req.status_code == 200:
@@ -94,26 +181,32 @@ def check_for_new_data():
         last_exec_date = read_last_date_updated(constants.LATEST_EXECUTION_DATE_FILE_PATH)
 
         if last_data_date > last_exec_date:
-            logging.info("New data found, processing and tweeting...")
+            log.info("New data found, processing and tweeting...")
+            charts_paths = generate_graphs(json_data)
             processed_data = process_latest(json_data)
-            tweet_updates(processed_data)
+            tweet_updates(processed_data, charts_paths)
             write_last_date_updated(constants.LATEST_EXECUTION_DATE_FILE_PATH, last_data_date)
-            logging.info("New data tweeted successfully.")
+            log.info("New data tweeted successfully.")
         else: 
-            logging.info("No updates found.")
+            log.info("No updates found.")
     else:
-        logging.warn("Got " + req.status_code + " status code")
+        log.warn("Got " + req.status_code + " status code.")
+
+# Main Loop
 
 def main():
     load_dotenv()
-    logging.basicConfig(format="%(asctime)s - %(levelname)s - %(module)s - %(message)s", level=logging.DEBUG)
 
     job = schedule.every(constants.UPDATE_CHECK_INTERVAL_MINUTES).minutes.do(check_for_new_data)
     job.run()
 
     while True:
         schedule.run_pending()
-        time.sleep(1)
+        try:
+            time.sleep(1)
+        except KeyboardInterrupt:
+            log.info("Received SIGINT, closing...")
+            return
 
 if __name__ == "__main__":
     main()

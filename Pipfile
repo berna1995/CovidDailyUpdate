@@ -11,6 +11,8 @@ requests = "*"
 python-twitter = "*"
 python-dotenv = "*"
 schedule = "*"
+plotly = "*"
+psutil = "*"
 
 [requires]
 python_version = "3.8"
