@@ -7,6 +7,7 @@ import schedule
 import time
 import logging
 import tempfile
+import plotly.io
 import plotly.graph_objects as go
 from pathlib import Path
 from dotenv import load_dotenv
@@ -117,6 +118,8 @@ def generate_graphs(json_data):
         constants.TEMP_FILES_PATH + "/chart_002.png",
         constants.TEMP_FILES_PATH + "/chart_003.png"
     ]
+
+    plotly.io.orca.config.default_scale = 2.0
 
     # Chart 1
     graph = go.Figure()
