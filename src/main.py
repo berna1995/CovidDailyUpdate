@@ -183,7 +183,7 @@ def check_for_new_data():
         last_data_date = parse_date(json_data[len(json_data) - 1]["data"])
         last_exec_date = read_last_date_updated(constants.LATEST_EXECUTION_DATE_FILE_PATH)
 
-        if last_data_date > last_exec_date:
+        if last_exec_date == None or last_data_date > last_exec_date:
             log.info("New data found, processing and tweeting...")
             charts_paths = generate_graphs(json_data)
             processed_data = process_latest(json_data)
