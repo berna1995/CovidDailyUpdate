@@ -7,6 +7,7 @@ import schedule
 import time
 import logging
 import tempfile
+import pytz
 import plotly.io
 import plotly.graph_objects as go
 from pathlib import Path
@@ -98,8 +99,14 @@ def write_last_date_updated(fpath, date):
     except IOError as e:
         log.error(e)
 
+def convert_datetime_to_tz(date_time, tz_src_str, tz_dst_str):
+    tz_src = pytz.timezone(tz_src_str)
+    tz_dst = pytz.timezone(tz_dst_str)
+    src_date = tz_src.localize(date_time)
+    return src_date.astimezone(tz_dst)
+
 def generate_graphs(json_data):
-    dates = list(map(lambda x: parse_date(x["data"]).date(), json_data))
+    dates = list(map(lambda x: convert_datetime_to_tz(parse_date(x["data"]), "utc", "Europe/Rome").date(), json_data))
     positives = list(map(lambda x: x["totale_attualmente_positivi"], json_data))
     deaths = list(map(lambda x: x["deceduti"], json_data))
     healed = list(map(lambda x: x["dimessi_guariti"], json_data))
