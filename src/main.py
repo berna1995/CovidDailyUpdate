@@ -205,7 +205,7 @@ def check_for_new_data():
 # Main Loop
 
 def main():
-    load_dotenv()
+    load_dotenv(verbose=False, override=False)
 
     job = schedule.every(constants.UPDATE_CHECK_INTERVAL_MINUTES).minutes.do(check_for_new_data)
     job.run()
