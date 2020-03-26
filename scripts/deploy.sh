@@ -8,6 +8,6 @@ pkill -F proc.pid &> /dev/null
 
 set -e
 
-pipenv install --deploy
+pipenv sync
 nohup pipenv run python src/main.py &> logs.log &
 echo $! > proc.pid
