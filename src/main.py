@@ -60,7 +60,7 @@ def tweet_updates(processed_data, charts_updates):
             "{4} Totale ospedalizzati: {5} ({6:+d}) ({7:+.2f}%)\n" \
             "{8} Totali terapia intensiva: {9} ({10:+d}) ({11:+.2f}%)\n" \
             "{12} Totale morti: {13} ({14:+d}) ({15:+.2f}%)\n\n" \
-            "#Covid19Italy #CovidDailyUpdates"
+            "#COVID2019 #CovidDailyUpdates"
 
     formatted_tweet = tweet.format(get_trend_icon(processed_data["active_total_cases_delta"]), 
                                    processed_data["active_total_cases"], 
