@@ -125,19 +125,6 @@ def generate_graphs(json_data):
     for i in range(len(new_deaths) - 1, 0, -1):
         new_deaths[i] = new_deaths[i] - new_deaths[i-1]
 
-    healing_ratios = list(map(lambda x: x["dimessi_guariti"] / x["totale_casi"], json_data))
-
-    efr_max = 1.78 / 100
-    efr_min = 0.51 / 100
-    efr_avg = (efr_min + efr_max) / 2.0
-    cfrs = list(map(lambda x: x["deceduti"] / x["totale_casi"], json_data))
-    ratios_min = list(map(lambda cfr: cfr / efr_max, cfrs))
-    ratios_max = list(map(lambda cfr: cfr / efr_min, cfrs))
-    ratios_avg = list(map(lambda cfr: cfr / efr_avg, cfrs))
-    est_cases_max = list(map(lambda p, r, h: (p * r) - (p * r * h), positives_active, ratios_max, healing_ratios))
-    est_cases_min = list(map(lambda p, r, h: (p * r) - (p * r * h), positives_active, ratios_min, healing_ratios))
-    est_cases_avg = list(map(lambda p, r, h: (p * r) - (p * r * h), positives_active, ratios_avg, healing_ratios))
-
     constants.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
 
     charts_paths = [
@@ -145,7 +132,6 @@ def generate_graphs(json_data):
         str(constants.TEMP_FILES_PATH / "chart_002.png"),
         str(constants.TEMP_FILES_PATH / "chart_003.png"),
         str(constants.TEMP_FILES_PATH / "chart_004.png"),
-        str(constants.TEMP_FILES_PATH / "chart_005.png")
     ]
 
     plotly.io.orca.config.default_scale = 2.0
@@ -240,35 +226,6 @@ def generate_graphs(json_data):
 
     # Chart 4
     graph = go.Figure()
-    graph.add_trace(go.Scatter(x=dates, y=est_cases_min, mode="lines", line=dict(width=0.0), showlegend=False))
-    graph.add_trace(go.Scatter(x=dates, y=est_cases_max, mode="none", name="Intervallo IFR={:.2f}%-{:.2f}%".format(efr_min*100, efr_max*100), fill="tonexty", fillcolor=constants.CHART_BLUE_TRANSPARENT))
-    graph.add_trace(go.Scatter(x=dates, y=positives_active, mode="lines", name="Casi Attivi (dati)", fill="none", line=dict(color=constants.CHART_RED)))
-    graph.add_trace(go.Scatter(x=dates, y=est_cases_avg, mode="lines", name="Casi Plausibili (IFR={:.2f}%)".format(efr_avg*100), fill="none", line=dict(color=constants.CHART_BLUE)))
-    graph.update_layout(
-        title="COVID2019 Italia - casi positivi apparenti vs casi plausibili",
-        title_x=0.5,
-        showlegend=True,
-        autosize=True, 
-        legend=dict(orientation="h", xanchor="center", yanchor="top", x=0.5, y=-0.25),
-        margin=dict(l=30, r=30, t=60, b=150)
-    )
-    graph.update_yaxes(rangemode="normal", automargin=True, ticks="outside")
-    graph.update_xaxes(tickangle=90, type="date", tickformat='%d-%m-%y', ticks="outside", rangemode="normal", tick0=dates[0], tickmode="linear", automargin=True)
-    graph.add_annotation(
-        xref="paper",
-        yref="paper",
-        x=0,
-        yanchor="top",
-        xanchor="left",
-        align="left",
-        y=-0.36,
-        showarrow=False,
-        font=dict(size=10),
-        text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
-    )
-    graph.write_image(charts_paths[3])
-
-    graph = go.Figure()
     graph.add_trace(go.Scatter(x=dates, y=new_positives, mode="lines+markers", name="Infetti", line=dict(color=constants.CHART_BLUE)))
     graph.add_trace(go.Scatter(x=dates, y=new_healed, mode="lines+markers", name="Guariti", line=dict(color=constants.CHART_GREEN)))
     graph.add_trace(go.Scatter(x=dates, y=new_deaths, mode="lines+markers", name="Morti", line=dict(color=constants.CHART_RED)))
@@ -294,7 +251,7 @@ def generate_graphs(json_data):
         font=dict(size=10),
         text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
     )
-    graph.write_image(charts_paths[4])
+    graph.write_image(charts_paths[3])
 
     return charts_paths
 
