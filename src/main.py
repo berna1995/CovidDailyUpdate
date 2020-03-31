@@ -27,9 +27,9 @@ def process_latest(json_data):
     last_day = json_data[len(json_data) - 1]
     prev_day = json_data[len(json_data) - 2]
     processed_data = {}
-    processed_data["active_total_cases"] = last_day["totale_attualmente_positivi"]
-    processed_data["active_total_cases_delta"] = last_day["totale_attualmente_positivi"] - prev_day["totale_attualmente_positivi"]
-    processed_data["active_total_cases_delta_percentage"] = (100 * processed_data["active_total_cases_delta"]) / prev_day["totale_attualmente_positivi"]
+    processed_data["active_total_cases"] = last_day["totale_positivi"]
+    processed_data["active_total_cases_delta"] = last_day["totale_positivi"] - prev_day["totale_positivi"]
+    processed_data["active_total_cases_delta_percentage"] = (100 * processed_data["active_total_cases_delta"]) / prev_day["totale_positivi"]
     processed_data["hospitalized"] = last_day["totale_ospedalizzati"]
     processed_data["hospitalized_delta"] = last_day["totale_ospedalizzati"] - prev_day["totale_ospedalizzati"]
     processed_data["hospitalized_delta_percentage"] = (100 * processed_data["hospitalized_delta"]) / prev_day["totale_ospedalizzati"]
@@ -107,17 +107,23 @@ def convert_datetime_to_tz(date_time, tz_src_str, tz_dst_str):
 
 def generate_graphs(json_data):
     dates = list(map(lambda x: convert_datetime_to_tz(parse_date(x["data"]), "utc", "Europe/Rome").date(), json_data))
-    positives = list(map(lambda x: x["totale_attualmente_positivi"], json_data))
+    positives_active = list(map(lambda x: x["totale_positivi"], json_data))
     deaths = list(map(lambda x: x["deceduti"], json_data))
     healed = list(map(lambda x: x["dimessi_guariti"], json_data))
     icu = list(map(lambda x: x["terapia_intensiva"], json_data))
     non_icu = list(map(lambda x: x["totale_ospedalizzati"] - x["terapia_intensiva"], json_data))
     home_isolated = list(map(lambda x: x["isolamento_domiciliare"], json_data))
-    new_positives = list(map(lambda x: x["nuovi_attualmente_positivi"], json_data))
+    new_positives = list(map(lambda x: x["nuovi_positivi"], json_data))
 
     tests = list(map(lambda x: x["tamponi"], json_data))
     for i in range(len(tests) - 1, 0, -1):
         tests[i] = tests[i] - tests[i-1]
+    new_healed = list(map(lambda x: x["dimessi_guariti"], json_data))
+    for i in range(len(new_healed) - 1, 0, -1):
+        new_healed[i] = new_healed[i] - new_healed[i-1]
+    new_deaths = list(map(lambda x: x["deceduti"], json_data))
+    for i in range(len(new_deaths) - 1, 0, -1):
+        new_deaths[i] = new_deaths[i] - new_deaths[i-1]
 
     healing_ratios = list(map(lambda x: x["dimessi_guariti"] / x["totale_casi"], json_data))
 
@@ -128,9 +134,9 @@ def generate_graphs(json_data):
     ratios_min = list(map(lambda cfr: cfr / efr_max, cfrs))
     ratios_max = list(map(lambda cfr: cfr / efr_min, cfrs))
     ratios_avg = list(map(lambda cfr: cfr / efr_avg, cfrs))
-    est_cases_max = list(map(lambda p, r, h: (p * r) - (p * r * h), positives, ratios_max, healing_ratios))
-    est_cases_min = list(map(lambda p, r, h: (p * r) - (p * r * h), positives, ratios_min, healing_ratios))
-    est_cases_avg = list(map(lambda p, r, h: (p * r) - (p * r * h), positives, ratios_avg, healing_ratios))
+    est_cases_max = list(map(lambda p, r, h: (p * r) - (p * r * h), positives_active, ratios_max, healing_ratios))
+    est_cases_min = list(map(lambda p, r, h: (p * r) - (p * r * h), positives_active, ratios_min, healing_ratios))
+    est_cases_avg = list(map(lambda p, r, h: (p * r) - (p * r * h), positives_active, ratios_avg, healing_ratios))
 
     constants.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
 
@@ -138,14 +144,15 @@ def generate_graphs(json_data):
         str(constants.TEMP_FILES_PATH / "chart_001.png"),
         str(constants.TEMP_FILES_PATH / "chart_002.png"),
         str(constants.TEMP_FILES_PATH / "chart_003.png"),
-        str(constants.TEMP_FILES_PATH / "chart_004.png")
+        str(constants.TEMP_FILES_PATH / "chart_004.png"),
+        str(constants.TEMP_FILES_PATH / "chart_005.png")
     ]
 
     plotly.io.orca.config.default_scale = 2.0
 
     # Chart 1
     graph = go.Figure()
-    graph.add_trace(go.Scatter(x=dates, y=positives, mode="lines+markers", name="Contagiati Attivi", line=dict(color=constants.CHART_BLUE)))
+    graph.add_trace(go.Scatter(x=dates, y=positives_active, mode="lines+markers", name="Contagiati Attivi", line=dict(color=constants.CHART_BLUE)))
     graph.add_trace(go.Scatter(x=dates, y=deaths, mode="lines+markers", name="Deceduti", line=dict(color=constants.CHART_RED)))
     graph.add_trace(go.Scatter(x=dates, y=healed, mode="lines+markers", name="Guariti", line=dict(color=constants.CHART_GREEN)))
     graph.update_layout(
@@ -204,9 +211,9 @@ def generate_graphs(json_data):
     # Chart 3
     graph = go.Figure()
     graph.add_trace(go.Bar(x=dates, y=tests, name="Tamponi Effettuati", marker=dict(color=constants.CHART_BLUE)))
-    graph.add_trace(go.Bar(x=dates, y=new_positives, name="Nuovi Positivi", marker=dict(color=constants.CHART_RED)))
+    graph.add_trace(go.Bar(x=dates, y=new_positives, name="Nuovi Infetti", marker=dict(color=constants.CHART_RED)))
     graph.update_layout(
-        title="COVID2019 Italia - nuovi positivi giornalieri e tamponi effettuati",
+        title="COVID2019 Italia - tamponi effettuati giornalmente e nuovi infetti",
         title_x=0.5,
         showlegend=True,
         autosize=True, 
@@ -235,7 +242,7 @@ def generate_graphs(json_data):
     graph = go.Figure()
     graph.add_trace(go.Scatter(x=dates, y=est_cases_min, mode="lines", line=dict(width=0.0), showlegend=False))
     graph.add_trace(go.Scatter(x=dates, y=est_cases_max, mode="none", name="Intervallo IFR={:.2f}%-{:.2f}%".format(efr_min*100, efr_max*100), fill="tonexty", fillcolor=constants.CHART_BLUE_TRANSPARENT))
-    graph.add_trace(go.Scatter(x=dates, y=positives, mode="lines", name="Casi Attivi (dati)", fill="none", line=dict(color=constants.CHART_RED)))
+    graph.add_trace(go.Scatter(x=dates, y=positives_active, mode="lines", name="Casi Attivi (dati)", fill="none", line=dict(color=constants.CHART_RED)))
     graph.add_trace(go.Scatter(x=dates, y=est_cases_avg, mode="lines", name="Casi Plausibili (IFR={:.2f}%)".format(efr_avg*100), fill="none", line=dict(color=constants.CHART_BLUE)))
     graph.update_layout(
         title="COVID2019 Italia - casi positivi apparenti vs casi plausibili",
@@ -260,6 +267,34 @@ def generate_graphs(json_data):
         text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
     )
     graph.write_image(charts_paths[3])
+
+    graph = go.Figure()
+    graph.add_trace(go.Scatter(x=dates, y=new_positives, mode="lines+markers", name="Infetti", line=dict(color=constants.CHART_BLUE)))
+    graph.add_trace(go.Scatter(x=dates, y=new_healed, mode="lines+markers", name="Guariti", line=dict(color=constants.CHART_GREEN)))
+    graph.add_trace(go.Scatter(x=dates, y=new_deaths, mode="lines+markers", name="Morti", line=dict(color=constants.CHART_RED)))
+    graph.update_layout(
+        title="COVID2019 Italia - nuovi guariti, morti, infetti",
+        title_x=0.5,
+        showlegend=True,
+        autosize=True, 
+        legend=dict(orientation="h", xanchor="center", yanchor="top", x=0.5, y=-0.25),
+        margin=dict(l=30, r=30, t=60, b=150)
+        )
+    graph.update_yaxes(rangemode="normal", automargin=True, ticks="outside")
+    graph.update_xaxes(tickangle=90, type="date", tickformat='%d-%m-%y', ticks="outside", tick0=dates[0], tickmode="linear", automargin=True)
+    graph.add_annotation(
+        xref="paper",
+        yref="paper",
+        x=0,
+        yanchor="top",
+        xanchor="left",
+        align="left",
+        y=-0.36,
+        showarrow=False,
+        font=dict(size=10),
+        text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
+    )
+    graph.write_image(charts_paths[4])
 
     return charts_paths
 
