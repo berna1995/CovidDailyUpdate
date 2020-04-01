@@ -167,16 +167,18 @@ def generate_graphs(json_data):
 
     # Chart 2
     graph = go.Figure()
-    graph.add_trace(go.Scatter(x=dates, y=icu, mode="lines", name="Ospedalizzati TI", stackgroup="one", line=dict(color=constants.CHART_RED)))
-    graph.add_trace(go.Scatter(x=dates, y=non_icu, mode="lines", name="Ospedalizzati Non TI", stackgroup="one", line=dict(color=constants.CHART_BLUE)))
-    graph.add_trace(go.Scatter(x=dates, y=home_isolated, mode="lines", name="Isolamento Domiciliare", stackgroup="one", line=dict(color=constants.CHART_GREEN)))
+    graph.add_trace(go.Bar(x=dates, y=icu, name="Ospedalizzati TI", marker=dict(color=constants.CHART_RED)))
+    graph.add_trace(go.Bar(x=dates, y=non_icu, name="Ospedalizzati Non TI", marker=dict(color=constants.CHART_BLUE)))
+    graph.add_trace(go.Bar(x=dates, y=home_isolated, name="Isolamento Domiciliare", marker=dict(color=constants.CHART_GREEN)))
     graph.update_layout(
         title="COVID2019 Italia - ospedalizzati e isolamento domiciliare dei positivi",
         title_x=0.5,
         showlegend=True,
         autosize=True, 
         legend=dict(orientation="h", xanchor="center", yanchor="top", x=0.5, y=-0.25),
-        margin=dict(l=30, r=30, t=60, b=150)
+        margin=dict(l=30, r=30, t=60, b=150),
+        barmode="stack",
+        bargap=0
         )
     graph.update_yaxes(rangemode="normal", automargin=True, ticks="outside")
     graph.update_xaxes(tickangle=90, type="date", tickformat='%d-%m-%y', ticks="outside", rangemode="normal", tick0=dates[0], tickmode="linear", automargin=True)
