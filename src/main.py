@@ -21,6 +21,25 @@ handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(module)s
 log.setLevel(logging.DEBUG)
 log.addHandler(handler)
 
+# Classes
+
+class ChartManager:
+
+    def __init__(self):
+        self.charts = []
+
+    def add(self, chart: go.Figure):
+        self.charts.append(chart)
+
+    def generate_images(self, path: Path):
+        images_paths = []
+        for i in range(0, len(self.charts)):
+            fname = "chart_" + str(i) + ".png"
+            fpath = str(path / fname)
+            self.charts[i].write_image(fpath)
+            images_paths.append(fpath)
+        return images_paths
+
 # Functions
 
 def process_latest(json_data):
@@ -126,13 +145,7 @@ def generate_graphs(json_data):
         new_deaths[i] = new_deaths[i] - new_deaths[i-1]
 
     constants.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
-
-    charts_paths = [
-        str(constants.TEMP_FILES_PATH / "chart_001.png"),
-        str(constants.TEMP_FILES_PATH / "chart_002.png"),
-        str(constants.TEMP_FILES_PATH / "chart_003.png"),
-        str(constants.TEMP_FILES_PATH / "chart_004.png"),
-    ]
+    chart_mgr = ChartManager()
 
     plotly.io.orca.config.default_scale = 2.0
 
@@ -163,7 +176,7 @@ def generate_graphs(json_data):
         font=dict(size=10),
         text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
     )
-    graph.write_image(charts_paths[0])
+    chart_mgr.add(graph)
 
     # Chart 2
     graph = go.Figure()
@@ -194,7 +207,7 @@ def generate_graphs(json_data):
         font=dict(size=10),
         text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
     )
-    graph.write_image(charts_paths[1])
+    chart_mgr.add(graph)
 
     # Chart 3
     graph = go.Figure()
@@ -224,7 +237,7 @@ def generate_graphs(json_data):
         font=dict(size=10),
         text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
     )
-    graph.write_image(charts_paths[2])
+    chart_mgr.add(graph)
 
     # Chart 4
     graph = go.Figure()
@@ -253,9 +266,9 @@ def generate_graphs(json_data):
         font=dict(size=10),
         text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
     )
-    graph.write_image(charts_paths[3])
+    chart_mgr.add(graph)
 
-    return charts_paths
+    return chart_mgr.generate_images(constants.TEMP_FILES_PATH)
 
 def check_for_new_data():
     log.info("Checking for new data...")
