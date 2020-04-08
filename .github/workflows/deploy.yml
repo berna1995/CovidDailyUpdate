@@ -41,3 +41,14 @@ jobs:
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_KEY }}
         script: ./CovidDailyUpdateBot/scripts/run.sh
+
+    - name: Post status to Discord
+      uses: sarisia/actions-status-discord@v1
+      if: always()
+      env: 
+        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      with:
+        status: ${{ job.status }}
+        job: Deploy to remote server
+        description: Deploying project to remote server
+        nofail: false
