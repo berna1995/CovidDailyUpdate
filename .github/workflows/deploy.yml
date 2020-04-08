@@ -1,4 +1,4 @@
-name: Deploy Workflow
+name: Deploy
 
 on:
   push:
@@ -18,7 +18,8 @@ jobs:
         path: CovidDailyUpdateBot
 
     - name: Decrypt .env.gpg file
-      run: ./CovidDailyUpdateBot/scripts/decrypt_file.sh .env .env.gpg
+      working-directory: ./CovidDailyUpdateBot
+      run: ./scripts/decrypt_file.sh .env .env.gpg
       env:
         DECRYPT_PASSPHRASE: ${{ secrets.DECRYPT_PASSPHRASE }}
 
