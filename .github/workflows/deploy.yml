@@ -30,7 +30,7 @@ jobs:
         port: ${{ secrets.SERVER_PORT }}
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_KEY }}
-        source: ${{ github.WORKSPACE }}
+        source: ./CovidDailyUpdateBot
         target: ${{ secrets.DEPLOY_PATH }}
     
     - name: Run updated project on remote server
