@@ -25,12 +25,11 @@ jobs:
 
     - name: Copy files on remote server
       uses: appleboy/scp-action@master
-      env: 
+      with: 
         host: ${{ secrets.SERVER_IP }}
         port: ${{ secrets.SERVER_PORT }}
         username: ${{ secrets.SERVER_USERNAME }}
         key: ${{ secrets.SSH_KEY }}
-      with: 
         source: ${{ github.WORKSPACE }}
         target: ${{ secrets.DEPLOY_PATH }}
     
