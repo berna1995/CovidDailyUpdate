@@ -18,7 +18,7 @@ jobs:
         path: CovidDailyUpdateBot
 
     - name: Decrypt .env.gpg file
-      run: ./scripts/decrypt_file.sh .env .env.gpg
+      run: ./CovidDailyUpdateBot/scripts/decrypt_file.sh .env .env.gpg
       env:
         DECRYPT_PASSPHRASE: ${{ secrets.DECRYPT_PASSPHRASE }}
 
