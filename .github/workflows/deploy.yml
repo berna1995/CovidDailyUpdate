@@ -1,0 +1,41 @@
+name: Deploy Workflow
+
+on:
+  push:
+    branches: [ live ]
+  pull_request:
+    branches: [ live ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with: 
+        ref: live
+
+    - name: Decrypt .env.gpg file
+      run: ./scripts/decrypt_file.sh env .env.gpg
+      env:
+        DECRYPT_PASSPHRASE: ${{ secrets.DECRYPT_PASSPHRASE }}
+
+    - name: Copy files on remote server
+      uses: horochx/deploy-via-scp@master
+      with: 
+        local: $GITHUB_WORKSPACE
+        remote: ${{ secrets.DEPLOY_PATH }}
+        host: ${{ secrets.SERVER_IP }}
+        port: ${{ secrets.SERVER_PORT }}
+        user: ${{ secrets.SERVER_USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+    
+    - name: Run updated project on remote server
+      uses: appleboy/ssh-action@master
+      with: 
+        host: ${{ secrets.SERVER_IP }}
+        port: ${{ secrets.SERVER_PORT }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: ./CovidDailyUpdateBot/scripts/run.sh
