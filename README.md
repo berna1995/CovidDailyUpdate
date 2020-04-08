@@ -2,7 +2,7 @@
 
 [![GitHub license](https://img.shields.io/github/license/berna1995/CovidDailyUpdateBot)](https://github.com/berna1995/CovidDailyUpdateBot/blob/master/LICENSE)
 [![GitHub last commit](https://img.shields.io/github/last-commit/berna1995/CovidDailyUpdateBot)](https://github.com/berna1995/CovidDailyUpdateBot/commits/master)
-[![Buddy Pipeline](https://app.buddy.works/bernabitomatteo/coviddailyupdate/pipelines/pipeline/245441/badge.svg?token=e2670a32c80f93c8391a63841426f175ad1610ecd007b0d664b884cd5cee5e99 "buddy pipeline")](https://app.buddy.works/bernabitomatteo/coviddailyupdate/pipelines/pipeline/245441)
+[![GitHub deploy](https://github.com/berna1995/CovidDailyUpdateBot/workflows/Deploy/badge.svg)](https://github.com/berna1995/CovidDailyUpdateBot/actions?query=workflow%3ADeploy)
 
 ## The Project
 
