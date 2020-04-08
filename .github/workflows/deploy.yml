@@ -24,7 +24,7 @@ jobs:
     - name: Copy files on remote server
       uses: horochx/deploy-via-scp@master
       with: 
-        local: $GITHUB_WORKSPACE
+        local: ${{ GITHUB_WORKSPACE }}
         remote: ${{ secrets.DEPLOY_PATH }}
         host: ${{ secrets.SERVER_IP }}
         port: ${{ secrets.SERVER_PORT }}
