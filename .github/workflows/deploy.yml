@@ -2,9 +2,13 @@ name: Deploy
 
 on:
   push:
-    branches: [ live ]
+    branches: [ master ]
   pull_request:
-    branches: [ live ]
+    branches: [ master ]
+  paths-ignore:
+    - ".gitignore"
+    - "LICENSE"
+    - "**/*.md"
 
 jobs:
   deploy:
@@ -14,7 +18,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
       with: 
-        ref: live
+        ref: master
         path: CovidDailyUpdateBot
 
     - name: Decrypt .env.gpg file
