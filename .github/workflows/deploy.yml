@@ -3,12 +3,16 @@ name: Deploy
 on:
   push:
     branches: [ master ]
+    paths-ignore:
+      - ".gitignore"
+      - "LICENSE"
+      - "**/*.md"
   pull_request:
     branches: [ master ]
-  paths-ignore:
-    - ".gitignore"
-    - "LICENSE"
-    - "**/*.md"
+    paths-ignore:
+      - ".gitignore"
+      - "LICENSE"
+      - "**/*.md"
 
 jobs:
   deploy:
