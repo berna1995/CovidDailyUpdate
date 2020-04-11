@@ -3,3 +3,4 @@
 /tmp
 *.env
 .last_exec
+/.venv
