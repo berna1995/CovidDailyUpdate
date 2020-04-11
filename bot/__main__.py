@@ -159,13 +159,13 @@ def generate_graphs(json_data):
 
     tests = list(map(lambda x: x["tamponi"], json_data))
     for i in range(len(tests) - 1, 0, -1):
-        tests[i] = tests[i] - tests[i-1]
+        tests[i] = tests[i] - tests[i - 1]
     new_healed = list(map(lambda x: x["dimessi_guariti"], json_data))
     for i in range(len(new_healed) - 1, 0, -1):
-        new_healed[i] = new_healed[i] - new_healed[i-1]
+        new_healed[i] = new_healed[i] - new_healed[i - 1]
     new_deaths = list(map(lambda x: x["deceduti"], json_data))
     for i in range(len(new_deaths) - 1, 0, -1):
-        new_deaths[i] = new_deaths[i] - new_deaths[i-1]
+        new_deaths[i] = new_deaths[i] - new_deaths[i - 1]
 
     constants.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
     chart_mgr = ChartManager()
@@ -323,11 +323,11 @@ def check_for_new_data():
         last_exec_date = read_last_date_updated(
             constants.LATEST_EXECUTION_DATE_FILE_PATH)
 
-        if last_exec_date == None or last_data_date > last_exec_date:
+        if last_exec_date is None or last_data_date > last_exec_date:
             log.info("New data found, processing and tweeting...")
             charts_paths = generate_graphs(json_data)
             processed_data = process_latest(json_data)
-            #tweet_updates(processed_data, charts_paths)
+            tweet_updates(processed_data, charts_paths)
             write_last_date_updated(
                 constants.LATEST_EXECUTION_DATE_FILE_PATH, last_data_date)
             log.info("New data tweeted successfully.")
