@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "bot"
+version = "0.1.0"
+description = "Just a simple bot written in Python posting on Twitter daily updates of the situation concerning Covid-19 in Italy"
+authors = ["Matteo Bernabito <matteo@bernabito.it>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+schedule = "^0.6.0"
+python-twitter = "^3.5"
+pytz = "^2019.3"
+plotly = "^4.6.0"
+python-dotenv = "^0.12.0"
+requests = "^2.23.0"
+psutil = "^5.7.0"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^3.7.9"
+autopep8 = "^1.5.1"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"

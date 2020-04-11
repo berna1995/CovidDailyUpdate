@@ -1,5 +1,6 @@
 /.vscode
-/src/__pycache__
+/bot/__pycache__
 /tmp
 *.env
 .last_exec
+/.venv
