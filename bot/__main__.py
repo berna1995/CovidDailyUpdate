@@ -1,5 +1,4 @@
 import requests
-import constants
 import twitter
 import os
 import datetime
@@ -10,6 +9,7 @@ import tempfile
 import pytz
 import plotly.io
 import plotly.graph_objects as go
+from bot import constants
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -327,7 +327,7 @@ def check_for_new_data():
             log.info("New data found, processing and tweeting...")
             charts_paths = generate_graphs(json_data)
             processed_data = process_latest(json_data)
-            tweet_updates(processed_data, charts_paths)
+            #tweet_updates(processed_data, charts_paths)
             write_last_date_updated(
                 constants.LATEST_EXECUTION_DATE_FILE_PATH, last_data_date)
             log.info("New data tweeted successfully.")

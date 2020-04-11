@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "coviddailyupdatebot"
+name = "bot"
 version = "0.1.0"
 description = "Just a simple bot written in Python posting on Twitter daily updates of the situation concerning Covid-19 in Italy"
 authors = ["Matteo Bernabito <matteo@bernabito.it>"]
