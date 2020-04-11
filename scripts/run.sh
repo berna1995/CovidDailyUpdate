@@ -8,6 +8,6 @@ pkill -F proc.pid &> /dev/null
 
 set -e
 
-pipenv sync
-nohup pipenv run python src/main.py &> logs.log &
+poetry install --no-root --no-dev
+nohup poetry run python -m bot &> logs.log &
 echo $! > proc.pid
