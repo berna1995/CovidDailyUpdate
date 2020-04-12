@@ -1,11 +1,14 @@
 import json
+
 from json import JSONDecodeError
+from datetime import datetime
+import pytz
 
 
 class DataProcessor:
 
     TYPE_TABLE = {
-        "data": str,
+        "data": datetime,
         "ricoverati_con_sintomi": int,
         "terapia_intensiva": int,
         "totale_ospedalizzati": int,
@@ -38,23 +41,23 @@ class DataProcessor:
         self.__data = data
 
     @staticmethod
-    def initialize(data):
+    def initialize(data, parse_date_format):
         final_data = data
-        if not DataProcessor.__verify_data_structure(data):
+        if not DataProcessor.__verify_data_structure(data, parse_date_format):
             if isinstance(data, str) or isinstance(data, bytes) or isinstance(data, bytearray):
                 try:
                     final_data = json.loads(data)
                 except JSONDecodeError:
-                    raise InvalidDataException(
+                    raise InvalidDataFormatException(
                         "could not decode data (wrong format)")
-                if not DataProcessor.__verify_data_structure(final_data):
-                    raise InvalidDataException("invalid data structure")
+                if not DataProcessor.__verify_data_structure(final_data, parse_date_format):
+                    raise InvalidDataFormatException("invalid data structure")
             else:
-                raise InvalidDataException("invalid data format")
+                raise InvalidDataFormatException("invalid data format")
         return DataProcessor(final_data)
 
     @staticmethod
-    def __verify_data_structure(data):
+    def __verify_data_structure(data, parse_date_format):
         if not isinstance(data, list):
             return False
         for entry in data:
@@ -64,8 +67,29 @@ class DataProcessor:
                 if key not in entry:
                     return False
                 if not isinstance(entry[key], DataProcessor.TYPE_TABLE[key]):
-                    return False
+                    if DataProcessor.TYPE_TABLE[key] is datetime:
+                        date_parsed = DataProcessor.__parse_date(
+                            entry[key], parse_date_format)
+                        entry[key] = date_parsed
+                    else:
+                        return False
         return True
+
+    @staticmethod
+    def __parse_date(str, date_format):
+        try:
+            return datetime.strptime(str, date_format)
+        except ValueError:
+            raise InvalidDataFormatException("could not cast date")
+
+    def localize_dates(self, tz_src: str, tz_dst: str):
+        src = pytz.timezone(tz_src)
+        dst = pytz.timezone(tz_dst)
+
+        for key in DataProcessor.TYPE_TABLE:
+            if DataProcessor.TYPE_TABLE[key] is datetime:
+                for entry in self.__data:
+                    entry[key] = src.localize(entry[key]).astimezone(dst)
 
     def get(self, key, start=None, end=None):
         start_from = start if start is not None else 0
@@ -78,13 +102,13 @@ class DataProcessor:
         return len(self.__data)
 
 
-class InvalidDataException(Exception):
+class InvalidDataFormatException(Exception):
 
     def __init__(self, message=None):
         self.message = message
 
     def __str__(self):
         if self.message:
-            return "InvalidDataException: {0}".format(self.message)
+            return "InvalidDataFormatException: {0}".format(self.message)
         else:
-            return "InvalidDataException: no message"
+            return "InvalidDataFormatException: no message"
