@@ -16,9 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Debug Location
-        run: pwd && ls -al
-
       - name: Setup Python
         uses: actions/setup-python@v1
         with:
