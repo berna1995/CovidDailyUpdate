@@ -2,6 +2,7 @@
 
 [![GitHub license](https://img.shields.io/github/license/berna1995/CovidDailyUpdateBot)](https://github.com/berna1995/CovidDailyUpdateBot/blob/master/LICENSE)
 [![GitHub last commit](https://img.shields.io/github/last-commit/berna1995/CovidDailyUpdateBot)](https://github.com/berna1995/CovidDailyUpdateBot/commits/master)
+[![GitHub test](https://github.com/berna1995/CovidDailyUpdateBot/workflows/Test/badge.svg?branch=master)](https://github.com/berna1995/CovidDailyUpdateBot/actions?query=workflow%3ATest)
 [![GitHub deploy](https://github.com/berna1995/CovidDailyUpdateBot/workflows/Deploy/badge.svg)](https://github.com/berna1995/CovidDailyUpdateBot/actions?query=workflow%3ADeploy)
 
 ## The Project
