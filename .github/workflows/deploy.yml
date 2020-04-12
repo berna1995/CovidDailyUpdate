@@ -3,11 +3,9 @@ name: Deploy
 on:
   push:
     branches: [ master ]
-    paths-ignore:
-      - ".gitignore"
-      - "LICENSE"
-      - "**/*.md"
-
+    tags:
+      - v*
+      
 jobs:
   deploy:
     runs-on: ubuntu-latest
