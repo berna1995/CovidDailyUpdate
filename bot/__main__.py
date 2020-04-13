@@ -13,6 +13,14 @@ import twitter
 from dotenv import load_dotenv
 
 from bot import constants
+from bot.processing import DataProcessor
+from bot.indicators import DeltaIndicator
+from bot.indicators import DeltaPercentageIndicator
+from bot.indicators import MovingAverageIndicator
+
+# Global variables
+
+DEBUG_MODE = False
 
 # Logger setup
 
@@ -46,33 +54,6 @@ class ChartManager:
 # Functions
 
 
-def process_latest(json_data):
-    last_day = json_data[len(json_data) - 1]
-    prev_day = json_data[len(json_data) - 2]
-    processed_data = {}
-    processed_data["active_total_cases"] = last_day["totale_positivi"]
-    processed_data["active_total_cases_delta"] = last_day["totale_positivi"] - \
-        prev_day["totale_positivi"]
-    processed_data["active_total_cases_delta_percentage"] = (
-        100 * processed_data["active_total_cases_delta"]) / prev_day["totale_positivi"]
-    processed_data["hospitalized"] = last_day["totale_ospedalizzati"]
-    processed_data["hospitalized_delta"] = last_day["totale_ospedalizzati"] - \
-        prev_day["totale_ospedalizzati"]
-    processed_data["hospitalized_delta_percentage"] = (
-        100 * processed_data["hospitalized_delta"]) / prev_day["totale_ospedalizzati"]
-    processed_data["intensive_care"] = last_day["terapia_intensiva"]
-    processed_data["intensive_care_delta"] = last_day["terapia_intensiva"] - \
-        prev_day["terapia_intensiva"]
-    processed_data["intensive_case_delta_percentage"] = (
-        100 * processed_data["intensive_care_delta"]) / prev_day["terapia_intensiva"]
-    processed_data["deaths"] = last_day["deceduti"]
-    processed_data["deaths_delta"] = last_day["deceduti"] - \
-        prev_day["deceduti"]
-    processed_data["deaths_delta_percentage"] = (
-        100 * processed_data["deaths_delta"]) / prev_day["deceduti"]
-    return processed_data
-
-
 def get_trend_icon(value):
     if value > 0:
         return "📈"
@@ -82,7 +63,7 @@ def get_trend_icon(value):
         return "📉"
 
 
-def tweet_updates(processed_data, charts_updates):
+def tweet_updates(dp: DataProcessor, chart_paths):
     api = twitter.Api(consumer_key=os.getenv("TWITTER_CONSUMER_API_KEY"),
                       consumer_secret=os.getenv("TWITTER_CONSUMER_SECRET_KEY"),
                       access_token_key=os.getenv("TWITTER_ACCESS_TOKEN_KEY"),
@@ -95,37 +76,49 @@ def tweet_updates(processed_data, charts_updates):
             "{12} Totale morti: {13} ({14:+d}) ({15:+.2f}%)\n\n" \
             "#COVID2019 #CovidDailyUpdates"
 
-    formatted_tweet = tweet.format(get_trend_icon(processed_data["active_total_cases_delta"]),
-                                   processed_data["active_total_cases"],
-                                   processed_data["active_total_cases_delta"],
-                                   processed_data["active_total_cases_delta_percentage"],
-                                   get_trend_icon(
-                                       processed_data["hospitalized_delta"]),
-                                   processed_data["hospitalized"],
-                                   processed_data["hospitalized_delta"],
-                                   processed_data["hospitalized_delta_percentage"],
-                                   get_trend_icon(
-                                       processed_data["intensive_care_delta"]),
-                                   processed_data["intensive_care"],
-                                   processed_data["intensive_care_delta"],
-                                   processed_data["intensive_case_delta_percentage"],
-                                   get_trend_icon(
-                                       processed_data["deaths_delta"]),
-                                   processed_data["deaths"],
-                                   processed_data["deaths_delta"],
-                                   processed_data["deaths_delta_percentage"])
+    active_total_cases = dp.get("total_active_positives", start=dp.size() - 2)
+    active_total_cases_delta = DeltaIndicator(active_total_cases).get_last()
+    active_total_cases_delta_percentage = DeltaPercentageIndicator(
+        active_total_cases).get_last()
+    total_hospitalized = dp.get("total_hospitalized", start=dp.size() - 2)
+    total_hospitalized_delta = DeltaIndicator(total_hospitalized).get_last()
+    total_hospitalized_delta_percentage = DeltaPercentageIndicator(
+        total_hospitalized).get_last()
+    total_ic = dp.get("total_intensive_care", start=dp.size() - 2)
+    total_ic_delta = DeltaIndicator(total_ic).get_last()
+    total_ic_delta_percentage = DeltaPercentageIndicator(total_ic).get_last()
+    total_deaths = dp.get("total_deaths", start=dp.size() - 2)
+    total_deaths_delta = DeltaIndicator(total_deaths).get_last()
+    total_deaths_delta_percentage = DeltaPercentageIndicator(
+        total_deaths).get_last()
 
-    api.PostUpdate(formatted_tweet, media=charts_updates)
+    formatted_tweet = tweet.format(get_trend_icon(active_total_cases_delta),
+                                   active_total_cases[1],
+                                   active_total_cases_delta,
+                                   active_total_cases_delta_percentage,
+                                   get_trend_icon(total_hospitalized_delta),
+                                   total_hospitalized[1],
+                                   total_hospitalized_delta,
+                                   total_hospitalized_delta_percentage,
+                                   get_trend_icon(total_ic_delta),
+                                   total_ic[1],
+                                   total_ic_delta,
+                                   total_ic_delta_percentage,
+                                   get_trend_icon(total_deaths_delta),
+                                   total_deaths[1],
+                                   total_deaths_delta,
+                                   total_deaths_delta_percentage)
 
-
-def parse_date(str):
-    return datetime.datetime.strptime(str, constants.DATE_FORMAT)
+    if DEBUG_MODE:
+        log.debug(formatted_tweet)
+    else:
+        api.PostUpdate(formatted_tweet, media=chart_paths)
 
 
 def read_last_date_updated(fpath):
     try:
         with open(fpath, "r") as file:
-            return parse_date(file.readline())
+            return datetime.datetime.strptime(file.readline(), constants.DATE_FORMAT)
     except IOError:
         return None
 
@@ -139,34 +132,18 @@ def write_last_date_updated(fpath, date):
         log.error(e)
 
 
-def convert_datetime_to_tz(date_time, tz_src_str, tz_dst_str):
-    tz_src = pytz.timezone(tz_src_str)
-    tz_dst = pytz.timezone(tz_dst_str)
-    src_date = tz_src.localize(date_time)
-    return src_date.astimezone(tz_dst)
-
-
-def generate_graphs(json_data):
-    dates = list(map(lambda x: convert_datetime_to_tz(
-        parse_date(x["data"]), "utc", "Europe/Rome").date(), json_data))
-    positives_active = list(map(lambda x: x["totale_positivi"], json_data))
-    deaths = list(map(lambda x: x["deceduti"], json_data))
-    healed = list(map(lambda x: x["dimessi_guariti"], json_data))
-    icu = list(map(lambda x: x["terapia_intensiva"], json_data))
-    non_icu = list(
-        map(lambda x: x["totale_ospedalizzati"] - x["terapia_intensiva"], json_data))
-    home_isolated = list(map(lambda x: x["isolamento_domiciliare"], json_data))
-    new_positives = list(map(lambda x: x["nuovi_positivi"], json_data))
-
-    tests = list(map(lambda x: x["tamponi"], json_data))
-    for i in range(len(tests) - 1, 0, -1):
-        tests[i] = tests[i] - tests[i - 1]
-    new_healed = list(map(lambda x: x["dimessi_guariti"], json_data))
-    for i in range(len(new_healed) - 1, 0, -1):
-        new_healed[i] = new_healed[i] - new_healed[i - 1]
-    new_deaths = list(map(lambda x: x["deceduti"], json_data))
-    for i in range(len(new_deaths) - 1, 0, -1):
-        new_deaths[i] = new_deaths[i] - new_deaths[i - 1]
+def generate_graphs(dp: DataProcessor):
+    dates = dp.get("date")
+    positives_active = dp.get("total_active_positives")
+    deaths = dp.get("total_deaths")
+    healed = dp.get("total_recovered")
+    icu = dp.get("total_intensive_care")
+    non_icu = dp.get("total_hospitalized_non_ic")
+    home_isolated = dp.get("total_home_confinement")
+    new_positives = dp.get("new_infected")
+    tests = DeltaIndicator(dp.get("total_tests")).get_all()
+    new_healed = DeltaIndicator(dp.get("total_recovered")).get_all()
+    new_deaths = DeltaIndicator(dp.get("total_deaths")).get_all()
 
     constants.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
     chart_mgr = ChartManager()
@@ -319,18 +296,19 @@ def check_for_new_data():
     req = requests.get(constants.NATIONAL_DATA_JSON_URL)
 
     if req.status_code == 200:
-        json_data = req.json()
-        last_data_date = parse_date(json_data[len(json_data) - 1]["data"])
+        dp = DataProcessor.initialize(req.content, constants.DATE_FORMAT)
+        last_data_date = dp.get("date", start=dp.size() - 1)[0]
         last_exec_date = read_last_date_updated(
             constants.LATEST_EXECUTION_DATE_FILE_PATH)
 
-        if last_exec_date is None or last_data_date > last_exec_date:
+        if last_exec_date is None or last_data_date > last_exec_date or DEBUG_MODE:
             log.info("New data found, processing and tweeting...")
-            charts_paths = generate_graphs(json_data)
-            processed_data = process_latest(json_data)
-            tweet_updates(processed_data, charts_paths)
-            write_last_date_updated(
-                constants.LATEST_EXECUTION_DATE_FILE_PATH, last_data_date)
+            dp.localize_dates("UTC", "Europe/Rome")
+            charts_paths = generate_graphs(dp)
+            tweet_updates(dp, charts_paths)
+            if not DEBUG_MODE:
+                write_last_date_updated(
+                    constants.LATEST_EXECUTION_DATE_FILE_PATH, last_data_date)
             log.info("New data tweeted successfully.")
         else:
             log.info("No updates found.")
@@ -342,6 +320,13 @@ def check_for_new_data():
 
 def main():
     load_dotenv(verbose=False, override=False)
+
+    if os.getenv("DEBUG") is not None:
+        log.debug("Debug mode")
+        global DEBUG_MODE
+        DEBUG_MODE = True
+        check_for_new_data()
+        exit(0)
 
     job = schedule.every(constants.UPDATE_CHECK_INTERVAL_MINUTES).minutes.do(
         check_for_new_data)
