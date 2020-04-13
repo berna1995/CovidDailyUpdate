@@ -24,7 +24,7 @@ class DataProcessor:
 
     LOOKUP_TABLE = {
         "date": "data",
-        "total_hospitalized_with_symptoms": "ricoverati_con_sintomi",
+        "total_hospitalized_non_ic": "ricoverati_con_sintomi",
         "total_intensive_care": "terapia_intensiva",
         "total_hospitalized": "totale_ospedalizzati",
         "total_home_confinement": "isolamento_domiciliare",

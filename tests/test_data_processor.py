@@ -124,7 +124,7 @@ class DataProcessorTest(unittest.TestCase):
             "tamponi": 9587
         }], constants.DATE_FORMAT)
         self.assertEqual(
-            dp.get("total_hospitalized_with_symptoms"), [101, 114, 128])
+            dp.get("total_hospitalized_non_ic"), [101, 114, 128])
         self.assertEqual(dp.get("total_intensive_care"), [26, 35, 36])
         self.assertEqual(dp.get("total_hospitalized"), [127, 150, 164])
         self.assertEqual(dp.get("total_home_confinement"), [94, 162, 221])
