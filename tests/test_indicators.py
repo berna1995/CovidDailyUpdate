@@ -3,6 +3,7 @@ import math
 
 from bot.indicators import MovingAverageIndicator
 from bot.indicators import DeltaIndicator
+from bot.indicators import DeltaPercentageIndicator
 
 
 class MovingAverageIndicatorTest(unittest.TestCase):
@@ -65,6 +66,32 @@ class DeltaIndicatorTest(unittest.TestCase):
     def test_delta_calculate_last(self):
         di = DeltaIndicator([10, 20, 30])
         self.assertEqual(di.get_last(), 10)
+
+
+class DeltaPercentageIndicatorTest(unittest.TestCase):
+
+    def test_delta_percentage_calculate_out_of_range(self):
+        dpi = DeltaPercentageIndicator([0, 1, 2])
+        with self.assertRaises(IndexError):
+            dpi.calculate(-1)
+        with self.assertRaises(IndexError):
+            dpi.calculate(3)
+
+    def test_delta_percentage_calculate_with_none_list(self):
+        with self.assertRaises(ValueError):
+            dpi = DeltaPercentageIndicator(None)
+
+    def test_delta_calculate_all_positives_change(self):
+        dpi = DeltaPercentageIndicator([19, 25, 55])
+        self.assertAlmostEqual(dpi.calculate(0), 0, delta=0.01)
+        self.assertAlmostEqual(dpi.calculate(1), 31.57, delta=0.01)
+        self.assertAlmostEqual(dpi.calculate(2), 120, delta=0.01)
+
+    def test_delta_calculate_positives_and_negative_changes(self):
+        dpi = DeltaPercentageIndicator([15, 20, 5])
+        self.assertAlmostEqual(dpi.calculate(0), 0, delta=0.01)
+        self.assertAlmostEqual(dpi.calculate(1), 33.33, delta=0.01)
+        self.assertAlmostEqual(dpi.calculate(2), -75, delta=0.01)
 
 
 if __name__ == "__main__":

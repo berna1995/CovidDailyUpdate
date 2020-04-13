@@ -50,3 +50,18 @@ class DeltaIndicator(Indicator):
             return self._data[0]
         else:
             return self._data[i] - self._data[i - 1]
+
+
+class DeltaPercentageIndicator(Indicator):
+
+    def __init__(self, data):
+        super().__init__(data)
+
+    def calculate(self, i):
+        self._check_range(i)
+        if i == 0:
+            return 0
+        else:
+            delta = self._data[i] - self._data[i - 1]
+            delta_perc = 100 * delta / self._data[i - 1]
+            return delta_perc
