@@ -6,18 +6,17 @@ from pathlib import Path
 
 import plotly.graph_objects as go
 import plotly.io
-from plotly.subplots import make_subplots
 import pytz
 import requests
 import schedule
 import twitter
 from dotenv import load_dotenv
+from plotly.subplots import make_subplots
 
 from bot import config
+from bot.indicators import (DeltaIndicator, DeltaPercentageIndicator,
+                            MovingAverageIndicator)
 from bot.processing import DataProcessor
-from bot.indicators import DeltaIndicator
-from bot.indicators import DeltaPercentageIndicator
-from bot.indicators import MovingAverageIndicator
 
 # Global variables / constants
 
