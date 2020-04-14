@@ -133,7 +133,7 @@ def write_last_date_updated(fpath, date):
 
 
 def generate_graphs(dp: DataProcessor):
-    dates = dp.get("date")
+    dates = list(map(lambda x: x.date(), dp.get("date")))
     positives_active = dp.get("total_active_positives")
     deaths = dp.get("total_deaths")
     healed = dp.get("total_recovered")
