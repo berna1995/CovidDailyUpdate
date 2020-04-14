@@ -6,6 +6,7 @@ from pathlib import Path
 
 import plotly.graph_objects as go
 import plotly.io
+from plotly.subplots import make_subplots
 import pytz
 import requests
 import schedule
@@ -185,13 +186,13 @@ def generate_graphs(dp: DataProcessor):
     chart_mgr.add(graph)
 
     # Chart 2
-    graph = go.Figure()
+    graph = make_subplots(rows=1, cols=3)
     graph.add_trace(go.Bar(x=dates, y=icu, name="Ospedalizzati TI",
-                           marker=dict(color=constants.CHART_RED)))
+                           marker=dict(color=constants.CHART_RED)), row=1, col=1)
     graph.add_trace(go.Bar(x=dates, y=non_icu, name="Ospedalizzati Non TI",
-                           marker=dict(color=constants.CHART_BLUE)))
+                           marker=dict(color=constants.CHART_BLUE)), row=1, col=2)
     graph.add_trace(go.Bar(x=dates, y=home_isolated,
-                           name="Isolamento Domiciliare", marker=dict(color=constants.CHART_GREEN)))
+                           name="Isolamento Domiciliare", marker=dict(color=constants.CHART_GREEN)), row=1, col=3)
     graph.update_layout(
         title="COVID2019 Italia - ospedalizzati e isolamento domiciliare dei positivi",
         title_x=0.5,
@@ -200,12 +201,11 @@ def generate_graphs(dp: DataProcessor):
         legend=dict(orientation="h", xanchor="center",
                     yanchor="top", x=0.5, y=-0.25),
         margin=dict(l=30, r=30, t=60, b=150),
-        barmode="stack",
         bargap=0
     )
     graph.update_yaxes(rangemode="normal", automargin=True, ticks="outside")
     graph.update_xaxes(tickangle=90, type="date", tickformat='%d-%m-%y', ticks="outside",
-                       rangemode="normal", tick0=dates[0], tickmode="linear", automargin=True)
+                       nticks=10, tickmode="auto", automargin=True)
     graph.add_annotation(
         xref="paper",
         yref="paper",
