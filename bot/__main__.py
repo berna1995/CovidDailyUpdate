@@ -146,6 +146,16 @@ def generate_graphs(dp: DataProcessor):
     new_healed = DeltaIndicator(dp.get("total_recovered")).get_all()
     new_deaths = DeltaIndicator(dp.get("total_deaths")).get_all()
 
+    MOVING_AVG_DAYS = 5
+
+    new_healed_moving_avg = MovingAverageIndicator(
+        new_healed, MOVING_AVG_DAYS).get_all()[MOVING_AVG_DAYS - 1:]
+    new_deaths_moving_avg = MovingAverageIndicator(
+        new_deaths, MOVING_AVG_DAYS).get_all()[MOVING_AVG_DAYS - 1:]
+    new_positives_moving_avg = MovingAverageIndicator(
+        new_positives, MOVING_AVG_DAYS).get_all()[MOVING_AVG_DAYS - 1:]
+    dates_moving_avg = dates[MOVING_AVG_DAYS - 1:]
+
     constants.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
     chart_mgr = ChartManager()
 
@@ -256,14 +266,15 @@ def generate_graphs(dp: DataProcessor):
 
     # Chart 4
     graph = go.Figure()
-    graph.add_trace(go.Scatter(x=dates, y=new_positives, mode="lines+markers",
+    graph.add_trace(go.Scatter(x=dates_moving_avg, y=new_positives_moving_avg, mode="lines+markers",
                                name="Infetti", line=dict(color=constants.CHART_BLUE)))
-    graph.add_trace(go.Scatter(x=dates, y=new_healed, mode="lines+markers",
+    graph.add_trace(go.Scatter(x=dates_moving_avg, y=new_healed_moving_avg, mode="lines+markers",
                                name="Guariti", line=dict(color=constants.CHART_GREEN)))
-    graph.add_trace(go.Scatter(x=dates, y=new_deaths, mode="lines+markers",
+    graph.add_trace(go.Scatter(x=dates_moving_avg, y=new_deaths_moving_avg, mode="lines+markers",
                                name="Morti", line=dict(color=constants.CHART_RED)))
     graph.update_layout(
-        title="COVID2019 Italia - nuovi guariti, morti, infetti",
+        title="COVID2019 Italia - nuovi guariti, morti, infetti [media mobile {0}gg]".format(
+            MOVING_AVG_DAYS),
         title_x=0.5,
         showlegend=True,
         autosize=True,
