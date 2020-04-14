@@ -139,6 +139,7 @@ def write_last_date_updated(fpath, date):
 
 
 def generate_graphs(dp: DataProcessor):
+    # Prepares data to generate charts
     dates = list(map(lambda x: x.date(), dp.get("date")))
     positives_active = dp.get("total_active_positives")
     deaths = dp.get("total_deaths")
@@ -161,11 +162,16 @@ def generate_graphs(dp: DataProcessor):
         new_positives, MOVING_AVG_DAYS).get_all()[MOVING_AVG_DAYS - 1:]
     dates_moving_avg = dates[MOVING_AVG_DAYS - 1:]
 
-    config.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
-    chart_mgr = ChartManager()
+    # Prepare to make charts
 
     plotly.io.orca.config.default_scale = 2.0
+    config.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
+    chart_mgr = ChartManager()
+    data_time_str = dates[len(dates) - 1].strftime("%d/%m/%Y")
+    charts_footer = ("<br>Fonte dati: Protezione Civile Italiana + elaborazioni ({0})"
+                     "<br>Generato da: github.com/berna1995/CovidDailyUpdateBot").format(data_time_str)
 
+    # Make charts
     # Chart 1
     graph = go.Figure()
     graph.add_trace(go.Scatter(x=dates, y=positives_active, mode="lines+markers",
@@ -196,7 +202,7 @@ def generate_graphs(dp: DataProcessor):
         y=-0.36,
         showarrow=False,
         font=dict(size=10),
-        text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
+        text=charts_footer
     )
     chart_mgr.add(graph)
 
@@ -231,7 +237,7 @@ def generate_graphs(dp: DataProcessor):
         y=-0.36,
         showarrow=False,
         font=dict(size=10),
-        text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
+        text=charts_footer
     )
     chart_mgr.add(graph)
 
@@ -265,7 +271,7 @@ def generate_graphs(dp: DataProcessor):
         y=-0.36,
         showarrow=False,
         font=dict(size=10),
-        text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
+        text=charts_footer
     )
     chart_mgr.add(graph)
 
@@ -300,7 +306,7 @@ def generate_graphs(dp: DataProcessor):
         y=-0.36,
         showarrow=False,
         font=dict(size=10),
-        text="<br>Fonte dati: Protezione Civile Italiana + elaborazioni<br>Generato da: github.com/berna1995/CovidDailyUpdateBot"
+        text=charts_footer
     )
     chart_mgr.add(graph)
 
