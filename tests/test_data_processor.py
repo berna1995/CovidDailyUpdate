@@ -2,25 +2,25 @@ import unittest
 
 from bot.processing import DataProcessor
 from bot.processing import InvalidDataFormatException
-from bot import constants
+from bot import config
 
 
 class DataProcessorTest(unittest.TestCase):
 
     def test_create_data_processor_with_invalid_data_type(self):
         with self.assertRaises(InvalidDataFormatException):
-            DataProcessor.initialize(12345, constants.DATE_FORMAT)
+            DataProcessor.initialize(12345, config.DATE_FORMAT)
 
     def test_create_data_processor_with_empty_list(self):
         try:
-            dp = DataProcessor.initialize([], constants.DATE_FORMAT)
+            dp = DataProcessor.initialize([], config.DATE_FORMAT)
             self.assertEqual(dp.size(), 0)
         except Exception:
             self.fail("should not fail, empty data should be accepted")
 
     def test_create_data_process_from_json_empty_list(self):
         try:
-            dp = DataProcessor.initialize("[]", constants.DATE_FORMAT)
+            dp = DataProcessor.initialize("[]", config.DATE_FORMAT)
             self.assertEqual(dp.size(), 0)
         except Exception:
             self.fail("should not fail, empty JSON data should be accepted")
@@ -40,7 +40,7 @@ class DataProcessorTest(unittest.TestCase):
                 "deceduti": 21,
                 "totale_casi": 888,
                 "tamponi": 15695,
-            }], constants.DATE_FORMAT)
+            }], config.DATE_FORMAT)
 
     def test_create_data_processor_with_one_correct_entry(self):
         dp = DataProcessor.initialize([{
@@ -56,7 +56,7 @@ class DataProcessorTest(unittest.TestCase):
             "deceduti": 21,
             "totale_casi": 888,
             "tamponi": 15695,
-        }], constants.DATE_FORMAT)
+        }], config.DATE_FORMAT)
         self.assertEqual(dp.size(), 1)
 
     def test_get_non_existing_property(self):
@@ -73,7 +73,7 @@ class DataProcessorTest(unittest.TestCase):
             "deceduti": 21,
             "totale_casi": 888,
             "tamponi": 15695,
-        }], constants.DATE_FORMAT)
+        }], config.DATE_FORMAT)
         with self.assertRaises(KeyError):
             dp.get("non-existing-key")
 
@@ -122,7 +122,7 @@ class DataProcessorTest(unittest.TestCase):
             "deceduti": 12,
             "totale_casi": 400,
             "tamponi": 9587
-        }], constants.DATE_FORMAT)
+        }], config.DATE_FORMAT)
         self.assertEqual(
             dp.get("total_hospitalized_non_ic"), [101, 114, 128])
         self.assertEqual(dp.get("total_intensive_care"), [26, 35, 36])
@@ -181,7 +181,7 @@ class DataProcessorTest(unittest.TestCase):
             "deceduti": 12,
             "totale_casi": 400,
             "tamponi": 9587
-        }], constants.DATE_FORMAT)
+        }], config.DATE_FORMAT)
         self.assertEqual(dp.get("total_tests", start=1), [8623, 9587])
         self.assertEqual(dp.get("total_tests", end=1), [4324])
         self.assertEqual(dp.get("total_tests", start=2, end=2), [])
@@ -202,7 +202,7 @@ class DataProcessorTest(unittest.TestCase):
                 "deceduti": 21,
                 "totale_casi": 888,
                 "tamponi": 15695,
-            }], constants.DATE_FORMAT)
+            }], config.DATE_FORMAT)
 
     def test_data_localization(self):
         dp = DataProcessor.initialize([{
@@ -218,7 +218,7 @@ class DataProcessorTest(unittest.TestCase):
             "deceduti": 21,
             "totale_casi": 888,
             "tamponi": 15695,
-        }], constants.DATE_FORMAT)
+        }], config.DATE_FORMAT)
         self.assertIsNone(dp.get("date")[0].tzinfo)
         dp.localize_dates("UTC", "Europe/Rome")
         self.assertIsNotNone(dp.get("date")[0].tzinfo)

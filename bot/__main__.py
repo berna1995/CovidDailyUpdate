@@ -13,15 +13,20 @@ import schedule
 import twitter
 from dotenv import load_dotenv
 
-from bot import constants
+from bot import config
 from bot.processing import DataProcessor
 from bot.indicators import DeltaIndicator
 from bot.indicators import DeltaPercentageIndicator
 from bot.indicators import MovingAverageIndicator
 
-# Global variables
+# Global variables / constants
 
 DEBUG_MODE = False
+
+CHART_BLUE = "#636EFA"
+CHART_BLUE_TRANSPARENT = "rgba(97, 107, 250, 0.4)"
+CHART_RED = "#EF553B"
+CHART_GREEN = "#00CC96"
 
 # Logger setup
 
@@ -119,7 +124,7 @@ def tweet_updates(dp: DataProcessor, chart_paths):
 def read_last_date_updated(fpath):
     try:
         with open(fpath, "r") as file:
-            return datetime.datetime.strptime(file.readline(), constants.DATE_FORMAT)
+            return datetime.datetime.strptime(file.readline(), config.DATE_FORMAT)
     except IOError:
         return None
 
@@ -127,7 +132,7 @@ def read_last_date_updated(fpath):
 def write_last_date_updated(fpath, date):
     try:
         with open(fpath, "w+") as file:
-            date_str = date.strftime(constants.DATE_FORMAT)
+            date_str = date.strftime(config.DATE_FORMAT)
             file.writelines(date_str)
     except IOError as e:
         log.error(e)
@@ -156,7 +161,7 @@ def generate_graphs(dp: DataProcessor):
         new_positives, MOVING_AVG_DAYS).get_all()[MOVING_AVG_DAYS - 1:]
     dates_moving_avg = dates[MOVING_AVG_DAYS - 1:]
 
-    constants.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
+    config.TEMP_FILES_PATH.mkdir(parents=True, exist_ok=True)
     chart_mgr = ChartManager()
 
     plotly.io.orca.config.default_scale = 2.0
@@ -164,11 +169,11 @@ def generate_graphs(dp: DataProcessor):
     # Chart 1
     graph = go.Figure()
     graph.add_trace(go.Scatter(x=dates, y=positives_active, mode="lines+markers",
-                               name="Contagiati Attivi", line=dict(color=constants.CHART_BLUE)))
+                               name="Contagiati Attivi", line=dict(color=CHART_BLUE)))
     graph.add_trace(go.Scatter(x=dates, y=deaths, mode="lines+markers",
-                               name="Deceduti", line=dict(color=constants.CHART_RED)))
+                               name="Deceduti", line=dict(color=CHART_RED)))
     graph.add_trace(go.Scatter(x=dates, y=healed, mode="lines+markers",
-                               name="Guariti", line=dict(color=constants.CHART_GREEN)))
+                               name="Guariti", line=dict(color=CHART_GREEN)))
     graph.update_layout(
         title="COVID2019 Italia - contagiati attivi, deceduti e guariti",
         title_x=0.5,
@@ -198,11 +203,11 @@ def generate_graphs(dp: DataProcessor):
     # Chart 2
     graph = make_subplots(rows=1, cols=3)
     graph.add_trace(go.Bar(x=dates, y=icu, name="Ospedalizzati TI",
-                           marker=dict(color=constants.CHART_RED)), row=1, col=1)
+                           marker=dict(color=CHART_RED)), row=1, col=1)
     graph.add_trace(go.Bar(x=dates, y=non_icu, name="Ospedalizzati Non TI",
-                           marker=dict(color=constants.CHART_BLUE)), row=1, col=2)
+                           marker=dict(color=CHART_BLUE)), row=1, col=2)
     graph.add_trace(go.Bar(x=dates, y=home_isolated,
-                           name="Isolamento Domiciliare", marker=dict(color=constants.CHART_GREEN)), row=1, col=3)
+                           name="Isolamento Domiciliare", marker=dict(color=CHART_GREEN)), row=1, col=3)
     graph.update_layout(
         title="COVID2019 Italia - ospedalizzati e isolamento domiciliare dei positivi",
         title_x=0.5,
@@ -233,9 +238,9 @@ def generate_graphs(dp: DataProcessor):
     # Chart 3
     graph = go.Figure()
     graph.add_trace(go.Bar(x=dates, y=tests, name="Tamponi Effettuati",
-                           marker=dict(color=constants.CHART_BLUE)))
+                           marker=dict(color=CHART_BLUE)))
     graph.add_trace(go.Bar(x=dates, y=new_positives,
-                           name="Nuovi Infetti", marker=dict(color=constants.CHART_RED)))
+                           name="Nuovi Infetti", marker=dict(color=CHART_RED)))
     graph.update_layout(
         title="COVID2019 Italia - tamponi effettuati giornalmente e nuovi infetti",
         title_x=0.5,
@@ -267,11 +272,11 @@ def generate_graphs(dp: DataProcessor):
     # Chart 4
     graph = go.Figure()
     graph.add_trace(go.Scatter(x=dates_moving_avg, y=new_positives_moving_avg, mode="lines+markers",
-                               name="Infetti", line=dict(color=constants.CHART_BLUE)))
+                               name="Infetti", line=dict(color=CHART_BLUE)))
     graph.add_trace(go.Scatter(x=dates_moving_avg, y=new_healed_moving_avg, mode="lines+markers",
-                               name="Guariti", line=dict(color=constants.CHART_GREEN)))
+                               name="Guariti", line=dict(color=CHART_GREEN)))
     graph.add_trace(go.Scatter(x=dates_moving_avg, y=new_deaths_moving_avg, mode="lines+markers",
-                               name="Morti", line=dict(color=constants.CHART_RED)))
+                               name="Morti", line=dict(color=CHART_RED)))
     graph.update_layout(
         title="COVID2019 Italia - nuovi guariti, morti, infetti [media mobile {0}gg]".format(
             MOVING_AVG_DAYS),
@@ -299,18 +304,18 @@ def generate_graphs(dp: DataProcessor):
     )
     chart_mgr.add(graph)
 
-    return chart_mgr.generate_images(constants.TEMP_FILES_PATH)
+    return chart_mgr.generate_images(config.TEMP_FILES_PATH)
 
 
 def check_for_new_data():
     log.info("Checking for new data...")
-    req = requests.get(constants.NATIONAL_DATA_JSON_URL)
+    req = requests.get(config.NATIONAL_DATA_JSON_URL)
 
     if req.status_code == 200:
-        dp = DataProcessor.initialize(req.content, constants.DATE_FORMAT)
+        dp = DataProcessor.initialize(req.content, config.DATE_FORMAT)
         last_data_date = dp.get("date", start=dp.size() - 1)[0]
         last_exec_date = read_last_date_updated(
-            constants.LATEST_EXECUTION_DATE_FILE_PATH)
+            config.LATEST_EXECUTION_DATE_FILE_PATH)
 
         if last_exec_date is None or last_data_date > last_exec_date or DEBUG_MODE:
             log.info("New data found, processing and tweeting...")
@@ -319,7 +324,7 @@ def check_for_new_data():
             tweet_updates(dp, charts_paths)
             if not DEBUG_MODE:
                 write_last_date_updated(
-                    constants.LATEST_EXECUTION_DATE_FILE_PATH, last_data_date)
+                    config.LATEST_EXECUTION_DATE_FILE_PATH, last_data_date)
             log.info("New data tweeted successfully.")
         else:
             log.info("No updates found.")
@@ -339,7 +344,7 @@ def main():
         check_for_new_data()
         exit(0)
 
-    job = schedule.every(constants.UPDATE_CHECK_INTERVAL_MINUTES).minutes.do(
+    job = schedule.every(config.UPDATE_CHECK_INTERVAL_MINUTES).minutes.do(
         check_for_new_data)
     job.run()
 
