@@ -334,7 +334,7 @@ def check_for_new_data():
         else:
             log.info("No updates found.")
     else:
-        log.warn("Got " + req.status_code + " status code.")
+        log.warn("Got {0} status code.".format(req.status_code))
 
 # Main Loop
 
