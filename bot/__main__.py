@@ -190,7 +190,7 @@ def generate_graphs(dp: DataProcessor):
     )
     graph.update_yaxes(rangemode="normal", automargin=True, ticks="outside")
     graph.update_xaxes(tickangle=90, type="date", tickformat='%d-%m-%y',
-                       ticks="outside", tick0=dates[0], tickmode="linear", automargin=True)
+                       ticks="outside", tickmode="auto", nticks=60, automargin=True)
     graph.add_annotation(
         xref="paper",
         yref="paper",
@@ -259,7 +259,7 @@ def generate_graphs(dp: DataProcessor):
     )
     graph.update_yaxes(rangemode="normal", automargin=True, ticks="outside")
     graph.update_xaxes(tickangle=90, type="date", tickformat='%d-%m-%y', ticks="outside",
-                       rangemode="normal", tick0=dates[0], tickmode="linear", automargin=True)
+                       rangemode="normal", tickmode="auto", nticks=60, automargin=True)
     graph.add_annotation(
         xref="paper",
         yref="paper",
@@ -294,7 +294,7 @@ def generate_graphs(dp: DataProcessor):
     )
     graph.update_yaxes(rangemode="normal", automargin=True, ticks="outside")
     graph.update_xaxes(tickangle=90, type="date", tickformat='%d-%m-%y',
-                       ticks="outside", tick0=dates[0], tickmode="linear", automargin=True)
+                       ticks="outside", tickmode="auto", nticks=60, automargin=True)
     graph.add_annotation(
         xref="paper",
         yref="paper",
