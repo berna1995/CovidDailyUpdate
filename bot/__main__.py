@@ -12,6 +12,7 @@ import schedule
 import twitter
 from dotenv import load_dotenv
 from plotly.subplots import make_subplots
+from requests.exceptions import RequestException
 
 from bot import config
 from bot.indicators import (DeltaIndicator, DeltaPercentageIndicator,
@@ -314,7 +315,12 @@ def generate_graphs(dp: DataProcessor):
 
 def check_for_new_data():
     log.info("Checking for new data...")
-    req = requests.get(config.NATIONAL_DATA_JSON_URL)
+
+    try:
+        req = requests.get(config.NATIONAL_DATA_JSON_URL)
+    except RequestException as req:
+        log.error("Error occurred while requesting data: " + str(req))
+        return
 
     if req.status_code == 200:
         dp = DataProcessor.initialize(req.content, config.DATE_FORMAT)
