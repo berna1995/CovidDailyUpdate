@@ -54,6 +54,7 @@ class ChartManager:
             fname = "chart_" + str(i) + ".png"
             fpath = str(path / fname)
             self.charts[i].write_image(fpath)
+            log.debug("Done creating " + fpath)
             images_paths.append(fpath)
         return images_paths
 
@@ -310,7 +311,9 @@ def generate_graphs(dp: DataProcessor):
     )
     chart_mgr.add(graph)
 
-    return chart_mgr.generate_images(config.TEMP_FILES_PATH)
+    gen_paths = chart_mgr.generate_images(config.TEMP_FILES_PATH)
+    plotly.io.orca.shutdown_server()
+    return gen_paths
 
 
 def check_for_new_data():
