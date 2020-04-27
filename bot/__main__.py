@@ -15,6 +15,8 @@ from plotly.subplots import make_subplots
 from requests.exceptions import RequestException
 
 from bot import config
+from bot.twitter import ThreadTwitter
+from bot.twitter import MediaType
 from bot.indicators import (DeltaIndicator, DeltaPercentageIndicator,
                             MovingAverageIndicator)
 from bot.processing import DataProcessor
@@ -71,18 +73,6 @@ def get_trend_icon(value):
 
 
 def tweet_updates(dp: DataProcessor, chart_paths):
-    api = twitter.Api(consumer_key=os.getenv("TWITTER_CONSUMER_API_KEY"),
-                      consumer_secret=os.getenv("TWITTER_CONSUMER_SECRET_KEY"),
-                      access_token_key=os.getenv("TWITTER_ACCESS_TOKEN_KEY"),
-                      access_token_secret=os.getenv("TWITTER_ACCESS_TOKEN_SECRET_KEY"))
-
-    tweet = "🦠🇮🇹 Aggiornamento Giornaliero Covid-19\n\n" \
-            "{0} Totale casi attivi: {1} ({2:+d}) ({3:+.2f}%)\n" \
-            "{4} Totale ospedalizzati: {5} ({6:+d}) ({7:+.2f}%)\n" \
-            "{8} Totali terapia intensiva: {9} ({10:+d}) ({11:+.2f}%)\n" \
-            "{12} Totale morti: {13} ({14:+d}) ({15:+.2f}%)\n\n" \
-            "#COVID2019 #CovidDailyUpdates"
-
     active_total_cases = dp.get("total_active_positives", start=dp.size() - 2)
     active_total_cases_delta = DeltaIndicator(active_total_cases).get_last()
     active_total_cases_delta_percentage = DeltaPercentageIndicator(
@@ -99,27 +89,39 @@ def tweet_updates(dp: DataProcessor, chart_paths):
     total_deaths_delta_percentage = DeltaPercentageIndicator(
         total_deaths).get_last()
 
-    formatted_tweet = tweet.format(get_trend_icon(active_total_cases_delta),
-                                   active_total_cases[1],
-                                   active_total_cases_delta,
-                                   active_total_cases_delta_percentage,
-                                   get_trend_icon(total_hospitalized_delta),
-                                   total_hospitalized[1],
-                                   total_hospitalized_delta,
-                                   total_hospitalized_delta_percentage,
-                                   get_trend_icon(total_ic_delta),
-                                   total_ic[1],
-                                   total_ic_delta,
-                                   total_ic_delta_percentage,
-                                   get_trend_icon(total_deaths_delta),
-                                   total_deaths[1],
-                                   total_deaths_delta,
-                                   total_deaths_delta_percentage)
+    tt = ThreadTwitter(os.getenv("TWITTER_CONSUMER_API_KEY"),
+                       os.getenv("TWITTER_CONSUMER_SECRET_KEY"),
+                       os.getenv("TWITTER_ACCESS_TOKEN_KEY"),
+                       os.getenv("TWITTER_ACCESS_TOKEN_SECRET_KEY"))
 
-    if DEBUG_MODE:
-        log.debug(formatted_tweet)
+    tt.set_header("🦠🇮🇹 Aggiornamento Giornaliero #COVID2019", repeat=False)
+    data_lines = []
+    data_lines.append("{0} Totale casi attivi: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(active_total_cases_delta),
+                                                                                active_total_cases[1],
+                                                                                active_total_cases_delta,
+                                                                                active_total_cases_delta_percentage))
+    data_lines.append("{0} Totale ospedalizzati: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(total_hospitalized_delta),
+                                                                                  total_hospitalized[1], total_hospitalized_delta,
+                                                                                  total_hospitalized_delta_percentage))
+    data_lines.append("{0} Totali terapia intensiva: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(total_ic_delta),
+                                                                                      total_ic[1],
+                                                                                      total_ic_delta,
+                                                                                      total_ic_delta_percentage))
+    data_lines.append("{0} Totale morti: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(
+        total_deaths_delta), total_deaths[1], total_deaths_delta, total_deaths_delta_percentage))
+
+    for line in data_lines:
+        tt.add_line(line)
+    for chart_p in chart_paths:
+        tt.add_media(chart_p, MediaType.PHOTO)
+
+    if not DEBUG_MODE:
+        tt.tweet()
     else:
-        api.PostUpdate(formatted_tweet, media=chart_paths)
+        lines_concat = ""
+        for line in data_lines:
+            lines_concat = lines_concat + "\n" + line
+        log.debug(lines_concat)
 
 
 def read_last_date_updated(fpath):
