@@ -11,8 +11,8 @@ class MediaType(Enum):
 
 class ThreadTwitter:
 
-    HEADER_MAX_LENGTH = 40
-    FOOTER_MAX_LENGTH = 40
+    HEADER_MAX_LENGTH = 50
+    FOOTER_MAX_LENGTH = 50
     LINE_MAX_LENGTH = CHARACTER_LIMIT - HEADER_MAX_LENGTH - FOOTER_MAX_LENGTH - 4
 
     def __init__(self, consumer_key, consumer_secret, access_token_key, access_token_secret):
