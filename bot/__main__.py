@@ -77,6 +77,17 @@ def tweet_updates(dp: DataProcessor, chart_paths):
     active_total_cases_delta = DeltaIndicator(active_total_cases).get_last()
     active_total_cases_delta_percentage = DeltaPercentageIndicator(
         active_total_cases).get_last()
+    new_positives = dp.get("new_infected", start=dp.size() - 2)
+    new_positives_delta = DeltaIndicator(new_positives).get_last()
+    new_positives_delta_percentage = DeltaPercentageIndicator(
+        new_positives).get_last()
+    healed = dp.get("total_recovered", start=dp.size() - 2)
+    healed_delta = DeltaIndicator(healed).get_last()
+    healed_delta_percentage = DeltaPercentageIndicator(healed).get_last()
+    home_confinement = dp.get("total_home_confinement", start=dp.size() - 2)
+    home_confinement_delta = DeltaIndicator(home_confinement).get_last()
+    home_confinement_delta_percentage = DeltaPercentageIndicator(
+        home_confinement).get_last()
     total_hospitalized = dp.get("total_hospitalized", start=dp.size() - 2)
     total_hospitalized_delta = DeltaIndicator(total_hospitalized).get_last()
     total_hospitalized_delta_percentage = DeltaPercentageIndicator(
@@ -88,6 +99,12 @@ def tweet_updates(dp: DataProcessor, chart_paths):
     total_deaths_delta = DeltaIndicator(total_deaths).get_last()
     total_deaths_delta_percentage = DeltaPercentageIndicator(
         total_deaths).get_last()
+    tests = dp.get("total_tests", start=dp.size() - 2)
+    tests_delta = DeltaIndicator(tests).get_last()
+    test_delta_percentage = DeltaPercentageIndicator(tests).get_last()
+    total_cases = dp.get("total_cases", start=dp.size() - 2)
+    total_cases_delta = DeltaIndicator(total_cases).get_last()
+    total_cases_percentage = DeltaPercentageIndicator(total_cases).get_last()
 
     tt = ThreadTwitter(os.getenv("TWITTER_CONSUMER_API_KEY"),
                        os.getenv("TWITTER_CONSUMER_SECRET_KEY"),
@@ -95,20 +112,43 @@ def tweet_updates(dp: DataProcessor, chart_paths):
                        os.getenv("TWITTER_ACCESS_TOKEN_SECRET_KEY"))
 
     tt.set_header("🦠🇮🇹 Aggiornamento Giornaliero #COVID2019", repeat=False)
+    tt.set_footer("Generato da: http://tiny.cc/covid-bot", repeat=False)
     data_lines = []
-    data_lines.append("{0} Totale casi attivi: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(active_total_cases_delta),
-                                                                                active_total_cases[1],
-                                                                                active_total_cases_delta,
-                                                                                active_total_cases_delta_percentage))
-    data_lines.append("{0} Totale ospedalizzati: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(total_hospitalized_delta),
-                                                                                  total_hospitalized[1], total_hospitalized_delta,
-                                                                                  total_hospitalized_delta_percentage))
-    data_lines.append("{0} Totali terapia intensiva: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(total_ic_delta),
-                                                                                      total_ic[1],
-                                                                                      total_ic_delta,
-                                                                                      total_ic_delta_percentage))
-    data_lines.append("{0} Totale morti: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(
-        total_deaths_delta), total_deaths[1], total_deaths_delta, total_deaths_delta_percentage))
+    data_lines.append("{0} Casi attivi: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(active_total_cases_delta),
+                                                                         active_total_cases[1],
+                                                                         active_total_cases_delta,
+                                                                         active_total_cases_delta_percentage))
+    data_lines.append("{0} Nuovi positivi: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(new_positives_delta),
+                                                                            new_positives[1],
+                                                                            new_positives_delta,
+                                                                            new_positives_delta_percentage))
+    data_lines.append("{0} Guariti/dimessi: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(healed_delta),
+                                                                             healed[1],
+                                                                             healed_delta,
+                                                                             healed_delta_percentage))
+    data_lines.append("{0} Isolamento domiciliare: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(home_confinement_delta),
+                                                                                    home_confinement[1],
+                                                                                    home_confinement_delta,
+                                                                                    home_confinement_delta_percentage))
+    data_lines.append("{0} Ospedalizzati: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(total_hospitalized_delta),
+                                                                           total_hospitalized[1], total_hospitalized_delta,
+                                                                           total_hospitalized_delta_percentage))
+    data_lines.append("{0} Terapie intensive: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(total_ic_delta),
+                                                                               total_ic[1],
+                                                                               total_ic_delta,
+                                                                               total_ic_delta_percentage))
+    data_lines.append("{0} Morti: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(total_deaths_delta),
+                                                                   total_deaths[1],
+                                                                   total_deaths_delta,
+                                                                   total_deaths_delta_percentage))
+    data_lines.append("{0} Tamponi: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(tests_delta),
+                                                                     tests[1],
+                                                                     tests_delta,
+                                                                     test_delta_percentage))
+    data_lines.append("{0} Casi totali: {1} ({2:+d}) ({3:+.2f}%)".format(get_trend_icon(total_cases_delta),
+                                                                         total_cases[1],
+                                                                         total_cases_delta,
+                                                                         total_cases_percentage))
 
     for line in data_lines:
         tt.add_line(line)
