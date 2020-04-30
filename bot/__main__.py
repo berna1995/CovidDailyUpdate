@@ -20,6 +20,7 @@ from bot.twitter import MediaType
 from bot.indicators import (DeltaIndicator, DeltaPercentageIndicator,
                             MovingAverageIndicator)
 from bot.processing import DataProcessor
+from bot.processing import InvalidDataFormatException
 
 # Global variables / constants
 
@@ -368,7 +369,12 @@ def check_for_new_data():
         return
 
     if req.status_code == 200:
-        dp = DataProcessor.initialize(req.content, config.DATE_FORMAT)
+        try:
+            dp = DataProcessor.initialize(req.content, config.DATE_FORMAT)
+        except InvalidDataFormatException as err:
+            log.error("Received invalid data: " + str(err))
+            return
+
         last_data_date = dp.get("date", start=dp.size() - 1)[0]
         last_exec_date = read_last_date_updated(
             config.LATEST_EXECUTION_DATE_FILE_PATH)
